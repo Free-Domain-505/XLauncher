@@ -6,16 +6,19 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout project
+      - name: Checkout XLauncher
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -23,16 +26,31 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.13'
 
-      - name: Make Gradle executable
-        run: chmod +x ./gradlew
+      - name: Check Project
+        run: |
+          echo "Project structure:"
+          ls -la
+          echo ""
+          echo "Gradle version:"
+          gradle --version
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: |
+          gradle assembleDebug --stacktrace --no-daemon
+
+      - name: Find APK
+        run: |
+          echo "Searching for APK..."
+          find . -type f -name "*.apk" -print
 
       - name: Upload XLauncher APK
         uses: actions/upload-artifact@v4
         with:
           name: XLauncher-APK
-          path: '**/build/outputs/apk/**/*.apk'
+          path: |
+            app/build/outputs/apk/**/*.apk
+            **/build/outputs/apk/**/*.apk
           if-no-files-found: error
